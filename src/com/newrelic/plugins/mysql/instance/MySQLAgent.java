@@ -26,8 +26,8 @@ public class MySQLAgent extends Agent {
     
     private static final Logger logger = Logger.getLogger(MySQLAgent.class);
     
-    private static final String GUID = "com.newrelic.plugins.mysql.instance";
-    private static final String version = "2.0.0";
+    private static final String GUID = "com.evolvemediallc.plugins.mysql.instance";
+    private static final String version = "2.0.1";
 
     public static final String AGENT_DEFAULT_HOST = "localhost"; // Default values for MySQL Agent
     public static final String AGENT_DEFAULT_USER = "newrelic";
@@ -121,7 +121,7 @@ public class MySQLAgent extends Agent {
     }
 
     /**
-     * This method runs the varies categories of MySQL statements and gathers the metrics that can be reported
+     * This method runs the various categories of MySQL statements and gathers the metrics that can be reported
      * 
      * @param Connection c MySQL Database Connection
      * @param String List of metrics to be obtained for this agent
@@ -236,6 +236,18 @@ public class MySQLAgent extends Agent {
             derived.put("newrelic/innodb_buffer_pool_pages_misc", pages_misc);
             derived.put("newrelic/innodb_buffer_pool_pages_free", pages_free);
             derived.put("newrelic/innodb_buffer_pool_pages_unassigned", pages_total - pages_data - pages_free - pages_misc);
+        }
+
+        /* InnoDB Row Lock Metrics */
+        if (areRequiredMetricsPresent("InnoDB Row Locking", existing, "status/innodb_row_lock_time_avg", "status/innodb_row_lock_time_max",
+                "status/innodb_row_lock_waits")) {
+            Float lock_time_avg = existing.get("status/innodb_row_lock_time_avg");
+            Float lock_time_max = existing.get("status/innodb_row_lock_time_max");
+            Float lock_waits    = existing.get("status/innodb_row_lock_waits");
+
+            derived.put("newrelic/innodb_row_lock_time_avg", lock_time_avg);
+            derived.put("newrelic/innodb_row_lock_time_max", lock_time_max);
+            derived.put("newrelic/innodb_row_lock_waits", lock_waits);
         }
 
         /* Query Cache */
@@ -477,6 +489,11 @@ public class MySQLAgent extends Agent {
 
         addMetricMeta("master/position", new MetricMeta(true, "Bytes/Second"));
         addMetricMeta("slave/relay_log_pos", new MetricMeta(true, "Bytes/Second"));
+
+        /* InnoDB Rock Locking */
+        addMetricMeta("newrelic/innodb_row_lock_time_avg",  new MetricMeta(false, "Milliseconds"));
+        addMetricMeta("newrelic/innodb_row_lock_time_max",  new MetricMeta(false, "Milliseconds"));
+        addMetricMeta("newrelic/innodb_row_lock_waits",     new MetricMeta(true, "Total Lock-Waits"));
     }
 
     /**

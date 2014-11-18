@@ -27,7 +27,7 @@ public class MySQLAgent extends Agent {
     private static final Logger logger = Logger.getLogger(MySQLAgent.class);
     
     private static final String GUID = "com.evolvemediallc.plugins.mysql.instance";
-    private static final String version = "2.0.1";
+    private static final String version = "2.0.2";
 
     public static final String AGENT_DEFAULT_HOST = "localhost"; // Default values for MySQL Agent
     public static final String AGENT_DEFAULT_USER = "newrelic";
@@ -248,6 +248,28 @@ public class MySQLAgent extends Agent {
             derived.put("newrelic/innodb_row_lock_time_avg", lock_time_avg);
             derived.put("newrelic/innodb_row_lock_time_max", lock_time_max);
             derived.put("newrelic/innodb_row_lock_waits", lock_waits);
+        }
+
+        /* InnoDB Buffer Pool Size */
+        /* TODO(sdejean): Label metrics as evolvemedia/ instead of newrelic/ */
+        if (areRequiredMetricsPresent("InnoDB Buffer Pool Size", existing, "status/innodb_page_size",
+                "innodb_status/buffer_pool_size",
+                "innodb_status/modified_db_pages",
+                "innodb_status/database_pages",
+                "innodb_status/old_database_pages")) {
+            Float bp_size_total     =
+                (existing.get("status/innodb_page_size") * existing.get("innodb_status/buffer_pool_size")) / (1024 * 1024);
+            Float bp_size_used      =
+                (existing.get("status/innodb_page_size") * existing.get("innodb_status/database_pages")) / (1024 * 1024);
+            Float bp_size_modified  =
+                (existing.get("status/innodb_page_size") * existing.get("innodb_status/modified_db_pages")) / (1024 * 1024);
+            Float bp_size_old       =
+                (existing.get("status/innodb_page_size") * existing.get("innodb_status/old_database_pages")) / (1024 * 1024);
+
+            derived.put("newrelic/innodb_bp_size_total", bp_size_total);
+            derived.put("newrelic/innodb_bp_size_used", bp_size_used);
+            derived.put("newrelic/innodb_bp_size_modified", bp_size_modified);
+            derived.put("newrelic/innodb_bp_size_old", bp_size_old);
         }
 
         /* Query Cache */
@@ -490,10 +512,16 @@ public class MySQLAgent extends Agent {
         addMetricMeta("master/position", new MetricMeta(true, "Bytes/Second"));
         addMetricMeta("slave/relay_log_pos", new MetricMeta(true, "Bytes/Second"));
 
-        /* InnoDB Rock Locking */
+        /* InnoDB Row Locking */
         addMetricMeta("newrelic/innodb_row_lock_time_avg",  new MetricMeta(false, "Milliseconds"));
         addMetricMeta("newrelic/innodb_row_lock_time_max",  new MetricMeta(false, "Milliseconds"));
         addMetricMeta("newrelic/innodb_row_lock_waits",     new MetricMeta(true, "Total Lock-Waits"));
+
+        /* InnoDB Buffer Pool Size */
+        addMetricMeta("newrelic/innodb_bp_size_total",      new MetricMeta(false, "MiB"));
+        addMetricMeta("newrelic/innodb_bp_size_used",       new MetricMeta(false, "MiB"));
+        addMetricMeta("newrelic/innodb_bp_size_modified",   new MetricMeta(false, "MiB"));
+        addMetricMeta("newrelic/innodb_bp_size_old",        new MetricMeta(false, "MiB"));
     }
 
     /**

@@ -27,7 +27,7 @@ public class MySQLAgent extends Agent {
     private static final Logger logger = Logger.getLogger(MySQLAgent.class);
     
     private static final String GUID = "com.evolvemediallc.plugins.mysql.instance";
-    private static final String version = "2.0.2";
+    private static final String version = "2.0.3";
 
     public static final String AGENT_DEFAULT_HOST = "localhost"; // Default values for MySQL Agent
     public static final String AGENT_DEFAULT_USER = "newrelic";
@@ -253,18 +253,18 @@ public class MySQLAgent extends Agent {
         /* InnoDB Buffer Pool Size */
         /* TODO(sdejean): Label metrics as evolvemedia/ instead of newrelic/ */
         if (areRequiredMetricsPresent("InnoDB Buffer Pool Size", existing, "status/innodb_page_size",
-                "innodb_status/buffer_pool_size",
-                "innodb_status/modified_db_pages",
-                "innodb_status/database_pages",
-                "innodb_status/old_database_pages")) {
+                "buffer_pool_total_stats/pool_size",
+                "buffer_pool_total_stats/database_pages",
+                "buffer_pool_total_stats/modified_database_pages",
+                "buffer_pool_total_stats/old_database_pages")) {
             Float bp_size_total     =
-                (existing.get("status/innodb_page_size") * existing.get("innodb_status/buffer_pool_size")) / (1024 * 1024);
+                (existing.get("status/innodb_page_size") * existing.get("buffer_pool_total_stats/pool_size")) / (1024 * 1024);
             Float bp_size_used      =
-                (existing.get("status/innodb_page_size") * existing.get("innodb_status/database_pages")) / (1024 * 1024);
+                (existing.get("status/innodb_page_size") * existing.get("buffer_pool_total_stats/database_pages")) / (1024 * 1024);
             Float bp_size_modified  =
-                (existing.get("status/innodb_page_size") * existing.get("innodb_status/modified_db_pages")) / (1024 * 1024);
+                (existing.get("status/innodb_page_size") * existing.get("buffer_pool_total_stats/modified_database_pages")) / (1024 * 1024);
             Float bp_size_old       =
-                (existing.get("status/innodb_page_size") * existing.get("innodb_status/old_database_pages")) / (1024 * 1024);
+                (existing.get("status/innodb_page_size") * existing.get("buffer_pool_total_stats/old_database_pages")) / (1024 * 1024);
 
             derived.put("newrelic/innodb_bp_size_total", bp_size_total);
             derived.put("newrelic/innodb_bp_size_used", bp_size_used);

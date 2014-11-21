@@ -27,7 +27,7 @@ public class MySQLAgent extends Agent {
     private static final Logger logger = Logger.getLogger(MySQLAgent.class);
     
     private static final String GUID = "com.evolvemediallc.plugins.mysql.instance";
-    private static final String version = "2.0.3";
+    private static final String version = "2.0.4";
 
     public static final String AGENT_DEFAULT_HOST = "localhost"; // Default values for MySQL Agent
     public static final String AGENT_DEFAULT_USER = "newrelic";
@@ -251,7 +251,7 @@ public class MySQLAgent extends Agent {
         }
 
         /* InnoDB Buffer Pool Size */
-        /* TODO(sdejean): Label metrics as evolvemedia/ instead of newrelic/ */
+        /* TODO(sdejean): Label metrics as evolvemediallc/ instead of newrelic/ */
         if (areRequiredMetricsPresent("InnoDB Buffer Pool Size", existing, "status/innodb_page_size",
                 "buffer_pool_total_stats/pool_size",
                 "buffer_pool_total_stats/database_pages",
@@ -294,16 +294,16 @@ public class MySQLAgent extends Agent {
             Float update_multi      = existing.get("status/com_update_multi");
             Float update            = existing.get("status/com_update");
 
-            derived.put("evolvemedia/dml_activity_procedures", (call_procedure / 60));
-            derived.put("evolvemedia/dml_activity_deletes", ((delete_multi + delete) / 60));
-            derived.put("evolvemedia/dml_activity_inserts", ((insert_select + insert) / 60));
-            derived.put("evolvemedia/dml_activity_replaces", ((replace_select + replace) / 60));
-            derived.put("evolvemedia/dml_activity_selects", (select / 60));
-            derived.put("evolvemedia/dml_activity_updates", ((update_multi + update) / 60));
+            derived.put("evolvemediallc/dml_activity_procedures", (call_procedure / 60));
+            derived.put("evolvemediallc/dml_activity_deletes", ((delete_multi + delete) / 60));
+            derived.put("evolvemediallc/dml_activity_inserts", ((insert_select + insert) / 60));
+            derived.put("evolvemediallc/dml_activity_replaces", ((replace_select + replace) / 60));
+            derived.put("evolvemediallc/dml_activity_selects", (select / 60));
+            derived.put("evolvemediallc/dml_activity_updates", ((update_multi + update) / 60));
         }
 
         /* Row Access Statistics */
-        if (areRequiredMetricsPresent("DML Activity", existing, "status/handler_read_first",
+        if (areRequiredMetricsPresent("Row Access Statistics", existing, "status/handler_read_first",
                 "status/handler_read_rnd",
                 "status/handler_read_rnd_next",
                 "status/handler_read_key",
@@ -316,8 +316,23 @@ public class MySQLAgent extends Agent {
             Float read_next     = existing.get("status/handler_read_next");
             Float read_prev     = existing.get("status/handler_read_prev");
 
-            derived.put("evolvemedia/row_access_full_scans", ((read_rnd + read_rnd_next) / 60));
-            derived.put("evolvemedia/row_access_indexes", ((read_first + read_key + read_next + read_prev) / 60));
+            derived.put("evolvemediallc/row_access_full_scans", ((read_rnd + read_rnd_next) / 60));
+            derived.put("evolvemediallc/row_access_indexes", ((read_first + read_key + read_next + read_prev) / 60));
+            
+            derived.put("evolvemediallc/pct_row_access_indexes", (100 - (((read_rnd_next + read_rnd) / (read_rnd_next + read_rnd + read_first + read_next + read_key + read_prev)) * 100)));
+        }
+
+        /* Row Write Statistics */
+        if (areRequiredMetricsPresent("Row Write Statistics", existing, "status/handler_delete",
+                "status/handler_update",
+                "status/handler_write")) {
+            Float delete    = existing.get("status/handler_read_first");
+            Float update    = existing.get("status/handler_read_rnd");
+            Float write     = existing.get("status/handler_read_rnd_next");
+
+            derived.put("evolvemediallc/row_write_deletes", (delete / 60));
+            derived.put("evolvemediallc/row_write_updates", (update / 60));
+            derived.put("evolvemediallc/row_write_writes",  (write / 60));
         }
 
         /* Query Cache */
@@ -572,17 +587,22 @@ public class MySQLAgent extends Agent {
         addMetricMeta("newrelic/innodb_bp_size_old",        new MetricMeta(false, "MiB"));
             
         /* DML Activity */
-        addMetricMeta("evolvemedia/dml_activity_procedures",new MetricMeta(false, "Avg. Statements/Second"));
-        addMetricMeta("evolvemedia/dml_activity_deletes",   new MetricMeta(false, "Avg. Statements/Second"));
-        addMetricMeta("evolvemedia/dml_activity_inserts",   new MetricMeta(false, "Avg. Statements/Second"));
-        addMetricMeta("evolvemedia/dml_activity_replaces",  new MetricMeta(false, "Avg. Statements/Second"));
-        addMetricMeta("evolvemedia/dml_activity_selects",   new MetricMeta(false, "Avg. Statements/Second"));
-        addMetricMeta("evolvemedia/dml_activity_updates",   new MetricMeta(false, "Avg. Statements/Second"));
+        addMetricMeta("evolvemediallc/dml_activity_procedures",new MetricMeta(true, "Avg. Statements/Second"));
+        addMetricMeta("evolvemediallc/dml_activity_deletes",   new MetricMeta(true, "Avg. Statements/Second"));
+        addMetricMeta("evolvemediallc/dml_activity_inserts",   new MetricMeta(true, "Avg. Statements/Second"));
+        addMetricMeta("evolvemediallc/dml_activity_replaces",  new MetricMeta(true, "Avg. Statements/Second"));
+        addMetricMeta("evolvemediallc/dml_activity_selects",   new MetricMeta(true, "Avg. Statements/Second"));
+        addMetricMeta("evolvemediallc/dml_activity_updates",   new MetricMeta(true, "Avg. Statements/Second"));
 
         /* Row Access Statistics */
-        addMetricMeta("evolvemedia/row_access_full_scans",  new MetricMeta(false, "Avg. Rows/Second"));
-        addMetricMeta("evolvemedia/row_access_indexes",     new MetricMeta(false, "Avg. Rows/Second"));
+        addMetricMeta("evolvemediallc/row_access_full_scans",  new MetricMeta(true, "Avg. Rows/Second"));
+        addMetricMeta("evolvemediallc/row_access_indexes",     new MetricMeta(true, "Avg. Rows/Second"));
+        addMetricMeta("evolvemediallc/pct_row_access_indexes", new MetricMeta(false, "Percent"));
 
+        /* Row Write Statistics */
+        addMetricMeta("evolvemediallc/row_write_deletes",     new MetricMeta(true, "Avg. Rows/Second"));
+        addMetricMeta("evolvemediallc/row_write_updates",     new MetricMeta(true, "Avg. Rows/Second"));
+        addMetricMeta("evolvemediallc/row_write_writes",      new MetricMeta(true, "Avg. Rows/Second"));
     }
 
     /**

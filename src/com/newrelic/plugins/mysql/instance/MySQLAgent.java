@@ -272,6 +272,54 @@ public class MySQLAgent extends Agent {
             derived.put("newrelic/innodb_bp_size_old", bp_size_old);
         }
 
+        /* DML Activity */
+        if (areRequiredMetricsPresent("DML Activity", existing, "status/com_call_procedure",
+                "status/com_delete_multi",
+                "status/com_delete",
+                "status/com_insert_select",
+                "status/com_insert",
+                "status/com_replace_select",
+                "status/com_replace",
+                "status/com_select",
+                "status/com_update_multi",
+                "status/com_update")) {
+            Float call_procedure    = existing.get("status/com_call_procedure");
+            Float delete_multi      = existing.get("status/com_delete_multi");
+            Float delete            = existing.get("status/com_delete");
+            Float insert_select     = existing.get("status/com_insert_select");
+            Float insert            = existing.get("status/com_insert");
+            Float replace_select    = existing.get("status/com_replace_select");
+            Float replace           = existing.get("status/com_replace");
+            Float select            = existing.get("status/com_select");
+            Float update_multi      = existing.get("status/com_update_multi");
+            Float update            = existing.get("status/com_update");
+
+            derived.put("evolvemedia/dml_activity_procedures", (call_procedure / 60));
+            derived.put("evolvemedia/dml_activity_deletes", ((delete_multi + delete) / 60));
+            derived.put("evolvemedia/dml_activity_inserts", ((insert_select + insert) / 60));
+            derived.put("evolvemedia/dml_activity_replaces", ((replace_select + replace) / 60));
+            derived.put("evolvemedia/dml_activity_selects", (select / 60));
+            derived.put("evolvemedia/dml_activity_updates", ((update_multi + update) / 60));
+        }
+
+        /* Row Access Statistics */
+        if (areRequiredMetricsPresent("DML Activity", existing, "status/handler_read_first",
+                "status/handler_read_rnd",
+                "status/handler_read_rnd_next",
+                "status/handler_read_key",
+                "status/handler_read_next",
+                "status/handler_read_prev")) {
+            Float read_first    = existing.get("status/handler_read_first");
+            Float read_rnd      = existing.get("status/handler_read_rnd");
+            Float read_rnd_next = existing.get("status/handler_read_rnd_next");
+            Float read_key      = existing.get("status/handler_read_key");
+            Float read_next     = existing.get("status/handler_read_next");
+            Float read_prev     = existing.get("status/handler_read_prev");
+
+            derived.put("evolvemedia/row_access_full_scans", ((read_rnd + read_rnd_next) / 60));
+            derived.put("evolvemedia/row_access_indexes", ((read_first + read_key + read_next + read_prev) / 60));
+        }
+
         /* Query Cache */
         if (areRequiredMetricsPresent("Query Cache", existing, "status/qcache_hits", "status/com_select", "status/qcache_free_blocks",
                 "status/qcache_total_blocks", "status/qcache_inserts", "status/qcache_not_cached")) {
@@ -515,13 +563,26 @@ public class MySQLAgent extends Agent {
         /* InnoDB Row Locking */
         addMetricMeta("newrelic/innodb_row_lock_time_avg",  new MetricMeta(false, "Milliseconds"));
         addMetricMeta("newrelic/innodb_row_lock_time_max",  new MetricMeta(false, "Milliseconds"));
-        addMetricMeta("newrelic/innodb_row_lock_waits",     new MetricMeta(true, "Total Lock-Waits"));
+        addMetricMeta("newrelic/innodb_row_lock_waits",     new MetricMeta(false, "Total Lock-Waits"));
 
         /* InnoDB Buffer Pool Size */
         addMetricMeta("newrelic/innodb_bp_size_total",      new MetricMeta(false, "MiB"));
         addMetricMeta("newrelic/innodb_bp_size_used",       new MetricMeta(false, "MiB"));
         addMetricMeta("newrelic/innodb_bp_size_modified",   new MetricMeta(false, "MiB"));
         addMetricMeta("newrelic/innodb_bp_size_old",        new MetricMeta(false, "MiB"));
+            
+        /* DML Activity */
+        addMetricMeta("evolvemedia/dml_activity_procedures",new MetricMeta(false, "Avg. Statements/Second"));
+        addMetricMeta("evolvemedia/dml_activity_deletes",   new MetricMeta(false, "Avg. Statements/Second"));
+        addMetricMeta("evolvemedia/dml_activity_inserts",   new MetricMeta(false, "Avg. Statements/Second"));
+        addMetricMeta("evolvemedia/dml_activity_replaces",  new MetricMeta(false, "Avg. Statements/Second"));
+        addMetricMeta("evolvemedia/dml_activity_selects",   new MetricMeta(false, "Avg. Statements/Second"));
+        addMetricMeta("evolvemedia/dml_activity_updates",   new MetricMeta(false, "Avg. Statements/Second"));
+
+        /* Row Access Statistics */
+        addMetricMeta("evolvemedia/row_access_full_scans",  new MetricMeta(false, "Avg. Rows/Second"));
+        addMetricMeta("evolvemedia/row_access_indexes",     new MetricMeta(false, "Avg. Rows/Second"));
+
     }
 
     /**
